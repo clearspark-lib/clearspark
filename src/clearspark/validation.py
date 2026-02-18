@@ -47,8 +47,8 @@ def _validate_load_data_params(data_path, spark_session, select_columns, filter_
     def _is_column(obj):
         return hasattr(obj, "_jc") or hasattr(obj, "alias")
     
-    if not isinstance(spark_session, SparkSession):
-        raise TypeError(f"'spark_session' must be a SparkSession, got {type(spark_session).__name__}.")
+    if not hasattr(spark_session, "read") or not hasattr(spark_session, "sql"):
+        raise TypeError(f"'spark_session' must be a SparkSession-like object, got {type(spark_session).__name__}.")
 
     if not isinstance(data_path, str) or not data_path.strip():
         raise ValueError(f"'data_path' must be a non-empty string, got {type(data_path).__name__}.")
