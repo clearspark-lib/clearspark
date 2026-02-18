@@ -4,9 +4,14 @@ from pyspark.sql.functions import\
      lit
 
 from clearspark.validation import\
-     _validate_with_buckets_params
+     _validate_with_buckets_params, \
+     _validate_load_data_params
 
-__all__ = ["with_buckets"]
+from clearspark.utils import \
+     _is_catalog_path, \
+     _get_reader
+
+__all__ = ["with_buckets", "load_data"]
 
 def with_buckets(spark_df, value_column_name: str, bucket_column_name: str, buckets: list):
      """
@@ -29,7 +34,7 @@ def with_buckets(spark_df, value_column_name: str, bucket_column_name: str, buck
     Raises:
         IndexError: If `buckets` is an empty list.
 
-    Label format:
+    Label data_format:
         "00. no info"       → null values
         "01. <{min}"        → values below the smallest boundary
         "0N. {low}-{high}"  → values within a boundary range (inclusive)
@@ -78,3 +83,56 @@ def with_buckets(spark_df, value_column_name: str, bucket_column_name: str, buck
           )
 
      return spark_df.withColumn(bucket_column_name, expr)
+
+def load_data(data_path: str, spark_session, select_columns: list = None, filter_spec = None, data_format: str = "delta"):
+    """
+    Loads data into a PySpark DataFrame from a catalog table or a file path, 
+    with optional column selection and row filtering.
+
+    This function abstracts the data source type. If the path does not contain a "/", 
+    it treats the input as a Spark Catalog table; otherwise, it treats it as a file path.
+
+    Args:
+        data_path (str): The table name (e.g., 'database.table') or the file path 
+                         (e.g., 's3://bucket/path').
+        spark_session (SparkSession): The active Spark session. (in DataBricks is the variable 'spark')
+        select_columns (list, optional): List of column names (str) or Spark Column objects 
+                                         to select. Defaults to None.
+        filter_spec (str or Column, optional): A SQL-like filter expression (str) or a 
+                                               Spark Column boolean expression. 
+                                               Defaults to None.
+        data_format (str, optional): The format of the data (e.g., "delta", "parquet"). 
+                                     Defaults to "delta".
+
+    Returns:
+        DataFrame: A PySpark DataFrame with the applied selections and filters.
+
+    Raises:
+        TypeError: If any parameter has an unexpected type or if `select_columns` 
+                   contains invalid types.
+        ValueError: If `data_path` is empty or invalid.
+
+    Example:
+        >>> # Using strings and SQL filter
+        >>> load_data("gold.sales", spark, select_columns=["id", "amount"], filter_spec="amount > 100")
+        
+        >>> # Using Column objects and Column expressions
+        >>> from pyspark.sql.functions import col
+        >>> load_data("/mnt/data/logs", spark, select_columns=[col("id"), col("status")], filter_spec=col("status").isNotNull())
+    """
+    _validate_load_data_params(data_path, spark_session, select_columns, filter_spec, data_format)
+
+    reader = _get_reader(spark_session, data_format)
+
+    if _is_catalog_path(data_path):
+        df = reader.table(data_path)
+    else:
+        df = reader.load(data_path)
+
+    if select_columns is not None:
+        df = df.select(*select_columns)
+
+    if filter_spec is not None:
+        df = df.filter(filter_spec)
+
+    return df
