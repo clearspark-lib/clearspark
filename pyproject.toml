@@ -5,15 +5,23 @@ build-backend = "hatchling.build"
 [project]
 name = "clearspark"
 version = "0.1.1"
-description = "A curated collection of essential PySpark functions for daily data engineering. Featuring quality-of-life enhancements for DataFrames."
+description = "A curated collection of essential PySpark functions for daily data engineering."
 readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}
+keywords = ["pyspark", "data-engineering", "dataframe", "etl", "spark-utils"]
 authors = [
-    {name = "Seu Nome", email = "seu.email@example.com"},
+    {name = "Vinicius", email = "vinnyuniverso3@gmail.com"},
 ]
 classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
@@ -21,11 +29,13 @@ dependencies = [
     "pyspark>=3.5.0",
 ]
 
+[project.urls]
+"Homepage" = "IN DEVELOPMENT"
+"Documentation" = "IN DEVELOPMENT"
+
 [project.optional-dependencies]
 dev = [
-    "pytest",
-    "black",
-    "mypy",
+    "pytest"
 ]
 
 [tool.hatch.build.targets.sdist]
@@ -33,3 +43,10 @@ include = ["/src"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/clearspark"]
+
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
