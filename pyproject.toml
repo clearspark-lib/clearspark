@@ -29,10 +29,6 @@ dependencies = [
     "pyspark>=3.5.0",
 ]
 
-[project.urls]
-"Homepage" = "IN DEVELOPMENT"
-"Documentation" = "IN DEVELOPMENT"
-
 [project.optional-dependencies]
 dev = [
     "pytest"
