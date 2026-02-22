@@ -1,4 +1,4 @@
-<img src="assets/images/readme-logo.png" style="transform: rotate(90deg);"  width="100%"/>
+<img src="https://raw.githubusercontent.com/clearspark-lib/clearspark/main/assets/images/readme-logo.png" style="transform: rotate(90deg);"  width="100%"/>
 
 # ⚡ clearspark
 
