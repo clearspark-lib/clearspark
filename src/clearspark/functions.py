@@ -3,18 +3,21 @@ from pyspark.sql.functions import\
      col, \
      lit
 
+from pyspark.sql.dataframe import \
+    DataFrame
+
 from clearspark.validation import\
      _validate_with_buckets_params, \
      _validate_load_data_params
 
-from clearspark.utils import \
+from clearspark.utils.functions_util import \
      _is_catalog_path, \
      _get_reader
 
 __all__ = ["with_buckets", "load_data"]
 
-def with_buckets(spark_df, value_column_name: str, bucket_column_name: str, buckets: list):
-     """
+def with_buckets(spark_df: DataFrame, value_column_name: str, bucket_column_name: str, buckets: list) -> DataFrame:
+    """
     Adds a categorical column to a PySpark DataFrame that classifies numeric values into labeled ranges (buckets).
 
     The resulting labels are prefixed with a zero-padded index to preserve natural sort order,
@@ -49,42 +52,43 @@ def with_buckets(spark_df, value_column_name: str, bucket_column_name: str, buck
             "02. 100-500"    → 100 <= revenue <= 500
             "03. 500-1000"   → 500 <= revenue <= 1000
             "04. >1000"      → revenue > 1000
-     """
-     _validate_with_buckets_params(spark_df, value_column_name, bucket_column_name, buckets)
+    """
+    _validate_with_buckets_params(spark_df, value_column_name, bucket_column_name, buckets)
 
-     value_col = col(value_column_name)
-     sorted_buckets = sorted(buckets) 
-     n = len(sorted_buckets)
+    value_col = col(value_column_name)
+    sorted_buckets = sorted(buckets) 
+    n = len(sorted_buckets)
 
-     expr = when(
+    #
+    expr = when(
         value_col.isNull(), 
         lit("00. no info")
-     )
+    )
     
-     expr = expr.when(
+    expr = expr.when(
         value_col < sorted_buckets[0], 
         lit(f"01. <{sorted_buckets[0]}")
-     )
+    )
 
-     for i in range(len(sorted_buckets) - 1):
-          low, high = sorted_buckets[i], sorted_buckets[i + 1]
+    for i in range(len(sorted_buckets) - 1):
+        low, high = sorted_buckets[i], sorted_buckets[i + 1]
 
-          label = f"{(i + 2):02d}. {low}-{high}"
+        label = f"{(i + 2):02d}. {low}-{high}"
 
-          expr = expr\
-               .when(
-                    (value_col >= low) & (value_col <= high), 
-                    lit(label)
-               )
+        expr = expr\
+            .when(
+                (value_col >= low) & (value_col <= high), 
+                lit(label)
+            )
 
-     expr = expr\
-          .otherwise(
-              lit(f"{(n + 1):02d}. >{sorted_buckets[-1]}")
-          )
+    expr = expr\
+        .otherwise(
+            lit(f"{(n + 1):02d}. >{sorted_buckets[-1]}")
+        )
 
-     return spark_df.withColumn(bucket_column_name, expr)
+    return spark_df.withColumn(bucket_column_name, expr)
 
-def load_data(data_path: str, spark_session, select_columns: list = None, filter_spec = None, data_format: str = "delta"):
+def load_data(data_path: str, spark_session, select_columns: list = None, filter_spec = None, data_format: str = "delta") -> DataFrame:
     """
     Loads data into a PySpark DataFrame from a catalog table or a file path, 
     with optional column selection and row filtering.

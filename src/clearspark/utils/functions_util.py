@@ -1,5 +1,4 @@
 
-
 __all__ = ["_is_catalog_path", "_get_reader"]
 
 def _is_catalog_path(data_path):

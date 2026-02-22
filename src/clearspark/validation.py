@@ -1,5 +1,7 @@
-from pyspark.sql import SparkSession
-from pyspark.sql.column import Column
+
+from clearspark.utils.validation_util import \
+    _is_column, \
+    _is_spark_session
 
 __all__ = ["_validate_with_buckets_params", "_validate_load_data_params"]
 
@@ -11,7 +13,7 @@ def _validate_with_buckets_params(spark_df, value_column_name: str, bucket_colum
         spark_df (DataFrame): Input PySpark DataFrame.
         value_column_name (str): Name of the numeric column to classify.
         bucket_column_name (str): Name of the new bucket column to be created.
-        buckets (list): List of numeric boundary values.
+        buckets (list): List of numeri ac boundary values.
 
     Raises:
         TypeError: If any parameter has an unexpected type.
@@ -44,10 +46,8 @@ def _validate_load_data_params(data_path, spark_session, select_columns, filter_
     Validates the parameters for the `load_data` function, ensuring robust checks 
     for Spark Session, Column types, and native Python types.
     """
-    def _is_column(obj):
-        return hasattr(obj, "_jc") or hasattr(obj, "alias")
-    
-    if not hasattr(spark_session, "read") or not hasattr(spark_session, "sql"):
+
+    if not _is_spark_session(spark_session):
         raise TypeError(f"'spark_session' must be a SparkSession-like object, got {type(spark_session).__name__}.")
 
     if not isinstance(data_path, str) or not data_path.strip():
@@ -57,10 +57,10 @@ def _validate_load_data_params(data_path, spark_session, select_columns, filter_
         if not isinstance(select_columns, list):
             raise TypeError(f"'select_columns' must be a list, got {type(select_columns).__name__}.")
         
-        for i, c in enumerate(select_columns):
-            if not isinstance(c, str) and not _is_column(c):
+        for index, element in enumerate(select_columns):
+            if not isinstance(element, str) and not _is_column(element):
                 raise TypeError(
-                    f"Element at index {i} of 'select_columns' must be a string or Column object, "
+                    f"Element at index {index} of 'select_columns' must be a string or Column object, "
                     f"got {type(c).__name__}."
                 )
 
