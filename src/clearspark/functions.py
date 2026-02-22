@@ -8,13 +8,14 @@ from pyspark.sql.dataframe import \
 
 from clearspark.validation import\
      _validate_with_buckets_params, \
+     _validate_with_categories_params, \
      _validate_load_data_params
 
 from clearspark.utils.functions_util import \
      _is_catalog_path, \
      _get_reader
 
-__all__ = ["with_buckets", "load_data"]
+__all__ = ["with_buckets", "load_data", "with_categories"]
 
 def with_buckets(spark_df: DataFrame, value_column_name: str, bucket_column_name: str, buckets: list) -> DataFrame:
     """
@@ -87,6 +88,61 @@ def with_buckets(spark_df: DataFrame, value_column_name: str, bucket_column_name
         )
 
     return spark_df.withColumn(bucket_column_name, expr)
+
+def with_categories(spark_df: DataFrame, value_column_name: str, category_column_name: str, mapping: dict) -> DataFrame:
+    """
+    Categorizes string or numeric values into broader groups based on a mapping dictionary.
+
+    This function creates a new column where each row is assigned a category label if its 
+    value exists in the provided mapping lists. It handles nulls explicitly and provides 
+    a fallback for values not found in the dictionary.
+
+    Args:
+        spark_df (DataFrame): Input PySpark DataFrame.
+        value_column_name (str): Name of the existing column to be categorized.
+        category_column_name (str): Name of the new column to be added with the category labels.
+        categories (dict): A dictionary where keys are category labels (str) and 
+                           values are lists of elements that belong to that category.
+                           Example: {"Fruit": ["Apple", "Banana"], "Vegetable": ["Carrot"]}.
+
+    Returns:
+        DataFrame: A new DataFrame with the additional categorical column.
+
+    Label data_format:
+        "no info"       → Applied to null values in the source column.
+        "{key}"         → Applied if the value is found in the corresponding dictionary list.
+        "uncategorized" → Applied to any value not present in the mapping dictionary.
+
+    Example:
+        >>> mapping = {
+        ...     "Finance": ["bank", "fintech", "insurance"],
+        ...     "Tech": ["saas", "cloud", "hardware"]
+        ... }
+        >>> with_categories(df, "industry", "sector", mapping)
+
+        If "industry" is "bank", "sector" becomes "Finance".
+        If "industry" is "agriculture", "sector" becomes "uncategorized".
+        If "industry" is null, "sector" becomes "no info".
+    """
+    _validate_with_categories_params(spark_df, value_column_name, category_column_name, mapping)
+
+    value_col = col(value_column_name)
+
+    expr = when(
+        value_col.isNull(),
+        lit('no info')
+    )
+
+    for category, subcategory in mapping.items():
+
+        expr = expr.when(
+            value_col.isin(subcategory),
+            lit(category)
+        )
+
+    expr = expr.otherwise(lit('uncategorized'))
+
+    return spark_df.withColumn(category_column_name, expr)
 
 def load_data(data_path: str, spark_session, select_columns: list = None, filter_spec = None, data_format: str = "delta") -> DataFrame:
     """
