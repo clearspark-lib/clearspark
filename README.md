@@ -1,4 +1,7 @@
-# ⚡ clearspark
+<img src="https://raw.githubusercontent.com/clearspark-lib/clearspark/main/assets/images/readme-logo.png" style="transform: rotate(90deg);"  width="100%"/>
+
+
+# ⭐ clearspark
 
 **clearspark** is a lightweight PySpark utility library that makes common data transformation patterns cleaner, faster to write, and easier to read. Stop rewriting the same boilerplate `when/otherwise` chains — clearspark gives you expressive, validated, one-liner functions for bucketing, categorizing, loading, and saving data.
 
