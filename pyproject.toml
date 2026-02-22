@@ -4,19 +4,21 @@ build-backend = "hatchling.build"
 
 [project]
 name = "clearspark"
-version = "0.2.0"
+version = "0.2.1"
 description = "A curated collection of essential PySpark functions for daily data engineering."
 readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}
-keywords = ["pyspark", "data-engineering", "dataframe", "etl", "spark-utils"]
+keywords = ["pyspark", "data-engineering", "dataframe", "etl", "spark-utils", "bucketing", "categorization"]
 authors = [
     {name = "Vinicius", email = "vinnyuniverso3@gmail.com"},
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
     "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Scientific/Engineering :: Information Analysis",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
@@ -31,8 +33,14 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "pytest"
+    "pytest",
+    "pytest-cov",
 ]
+
+[project.urls]
+Homepage = "https://github.com/clearspark-lib/documentation-web-page"
+Repository = "https://github.com/clearspark-lib/clearspark"
+owner = "https://github.com/ViniciusDev-leg"
 
 [tool.hatch.build.targets.sdist]
 include = ["/src"]
@@ -40,9 +48,11 @@ include = ["/src"]
 [tool.hatch.build.targets.wheel]
 packages = ["src/clearspark"]
 
-
 [tool.mypy]
 python_version = "3.8"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
