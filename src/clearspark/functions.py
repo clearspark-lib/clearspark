@@ -9,13 +9,15 @@ from pyspark.sql.dataframe import \
 from clearspark.validation import\
      _validate_with_buckets_params, \
      _validate_with_categories_params, \
-     _validate_load_data_params
+     _validate_load_data_params, \
+     _validate_save_data_params
 
 from clearspark.utils.functions_util import \
      _is_catalog_path, \
-     _get_reader
+     _get_reader, \
+     _get_writer
 
-__all__ = ["with_buckets", "load_data", "with_categories"]
+__all__ = ["with_buckets", "load_data", "with_categories", "save_data"]
 
 def with_buckets(spark_df: DataFrame, value_column_name: str, bucket_column_name: str, buckets: list) -> DataFrame:
     """
@@ -196,3 +198,47 @@ def load_data(data_path: str, spark_session, select_columns: list = None, filter
         df = df.filter(filter_spec)
 
     return df
+
+def save_data(df: DataFrame, data_path: str, data_format: str = "delta", mode: str = "overwrite", partition_by: list = None) -> None:
+    """
+    Saves a PySpark DataFrame to a catalog table or a file path,
+    with optional partitioning and write mode control.
+
+    This function abstracts the data destination type. If the path does not contain a "/",
+    it treats the input as a Spark Catalog table; otherwise, it treats it as a file path.
+
+    Args:
+        df (DataFrame): The PySpark DataFrame to be saved.
+        data_path (str): The table name (e.g., 'database.table') or the file path
+                         (e.g., 's3://bucket/path').
+        data_format (str, optional): The format of the data (e.g., "delta", "parquet").
+                                     Defaults to "delta".
+        mode (str, optional): Specifies the behavior if the destination already exists.
+                              Accepted values: "overwrite", "append", "ignore", "error".
+                              Defaults to "overwrite".
+        partition_by (list, optional): List of column names (str) to partition the output by.
+                                       Defaults to None.
+
+    Returns:
+        None
+
+    Raises:
+        TypeError: If any parameter has an unexpected type or if `partition_by`
+                   contains non-string values.
+        ValueError: If `data_path` is empty or invalid, or if `mode` is not an accepted value.
+
+    Example:
+        >>> # Save to a catalog table
+        >>> save_data(df, "gold.sales", mode="overwrite")
+
+        >>> # Save to a file path with partitioning
+        >>> save_data(df, "/mnt/data/sales", data_format="parquet", mode="append", partition_by=["year", "month"])
+    """
+    _validate_save_data_params(df, data_path, data_format, mode, partition_by)
+
+    writer = _get_writer(df, data_format, mode, partition_by)
+
+    if _is_catalog_path(data_path):
+        writer.saveAsTable(data_path)
+    else:
+        writer.save(data_path)

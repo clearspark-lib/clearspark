@@ -3,7 +3,10 @@ from clearspark.utils.validation_util import \
     _is_column, \
     _is_spark_session
 
-__all__ = ["_validate_with_buckets_params", "_validate_load_data_params", "_validate_with_categories_params"]
+from pyspark.sql.dataframe import \
+    DataFrame
+
+__all__ = ["_validate_with_buckets_params", "_validate_load_data_params", "_validate_with_categories_params", "_validate_save_data_params"]
 
 def _validate_with_buckets_params(spark_df, value_column_name: str, bucket_column_name: str, buckets: list):
     """
@@ -116,3 +119,26 @@ def _validate_load_data_params(data_path, spark_session, select_columns, filter_
 
     if not isinstance(data_format, str):
         raise TypeError(f"'data_format' must be a string, got {type(data_format).__name__}.")
+    
+
+VALID_WRITE_MODES = {"overwrite", "append", "ignore", "error"}
+
+def _validate_save_data_params(df, data_path, data_format, mode, partition_by):
+    if not isinstance(df, DataFrame):
+        raise TypeError(f"'df' must be a PySpark DataFrame, got {type(df)}.")
+
+    if not isinstance(data_path, str) or not data_path.strip():
+        raise ValueError("'data_path' must be a non-empty string.")
+
+    if not isinstance(data_format, str) or not data_format.strip():
+        raise TypeError(f"'data_format' must be a non-empty string, got {type(data_format)}.")
+
+    if mode not in VALID_WRITE_MODES:
+        raise ValueError(f"'mode' must be one of {VALID_WRITE_MODES}, got '{mode}'.")
+
+    if partition_by is not None:
+        if not isinstance(partition_by, list):
+            raise TypeError(f"'partition_by' must be a list, got {type(partition_by)}.")
+        for item in partition_by:
+            if not isinstance(item, str):
+                raise TypeError(f"All items in 'partition_by' must be strings, got {type(item)}.")
