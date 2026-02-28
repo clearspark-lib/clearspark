@@ -127,4 +127,4 @@ def with_categories(spark_df: DataFrame, value_column_name: str, category_column
 load_data.__doc__ = load_data_doc
 save_data.__doc__ = save_data_doc
 with_buckets.__doc__ = with_buckets_doc
-with_categories.__doc__ = with_buckets_doc
+with_categories.__doc__ = with_categories_doc
